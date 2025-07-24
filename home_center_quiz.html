@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホームセンタークイズ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quiz-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #4ecdc4;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            border-color: #4ecdc4;
+            background: #f0fdfc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(78, 205, 196, 0.2);
+        }
+
+        .option.selected {
+            border-color: #4ecdc4;
+            background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+            color: white;
+            font-weight: bold;
+        }
+
+        .option.correct {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .option.incorrect {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 20px;
+        }
+
+        .score-message {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .explanation {
+            background: #f8f9fa;
+            border-left: 4px solid #4ecdc4;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .explanation h4 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .celebration {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            animation: celebrate 2s ease-out forwards;
+        }
+
+        @keyframes celebrate {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .home-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .question {
+                font-size: 1.1em;
+            }
+            
+            .option {
+                padding: 15px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="home-icon">🏠</div>
+        <h1>ホームセンタークイズ</h1>
+        <p class="subtitle">あなたのホームセンター知識をテストしよう！</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="quiz-content" id="quizContent">
+            <div class="question-container">
+                <div class="question-number" id="questionNumber"></div>
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+            </div>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>次の問題</button>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <div class="score" id="finalScore"></div>
+            <div class="score-message" id="scoreMessage"></div>
+            <div id="reviewSection"></div>
+            <button class="btn" onclick="restartQuiz()">もう一度挑戦</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "日本最大のホームセンターチェーンはどこでしょうか？",
+                options: ["カインズ", "コメリ", "DCMホールディングス", "コーナン"],
+                correct: 0,
+                explanation: "カインズは店舗数・売上高ともに日本最大のホームセンターチェーンです。群馬県に本社を置き、全国に200店舗以上を展開しています。"
+            },
+            {
+                question: "ホームセンターで一般的に販売されていないものはどれでしょうか？",
+                options: ["園芸用品", "DIY工具", "処方箋薬", "ペット用品"],
+                correct: 2,
+                explanation: "処方箋薬は薬局でのみ販売可能で、ホームセンターでは取り扱えません。ホームセンターでは一般用医薬品（市販薬）のみ販売可能です。"
+            },
+            {
+                question: "ホームセンターの木材カットサービスで、通常1カットあたりの料金はいくらくらいでしょうか？",
+                options: ["10円", "50円", "100円", "200円"],
+                correct: 1,
+                explanation: "多くのホームセンターでは1カット30円〜50円程度でカットサービスを提供しています。店舗によって料金は異なりますが、50円前後が一般的です。"
+            },
+            {
+                question: "ホームセンターで「2×4材（ツーバイフォー材）」と呼ばれる木材の実際のサイズはどれでしょうか？",
+                options: ["2インチ×4インチ", "38mm×89mm", "40mm×90mm", "50mm×100mm"],
+                correct: 1,
+                explanation: "2×4材は名称上は2インチ×4インチですが、乾燥・加工により実際のサイズは38mm×89mmになります。これは建築業界の標準規格です。"
+            },
+            {
+                question: "ホームセンターで園芸用の土を購入する際、一般的な培養土の袋のサイズはどれでしょうか？",
+                options: ["5リットル", "14リットル", "25リットル", "50リットル"],
+                correct: 1,
+                explanation: "一般家庭用の培養土は14リットル入りが最も一般的です。持ち運びやすく、ベランダ園芸やプランター栽培に適したサイズです。"
+            },
+            {
+                question: "ホームセンターの「ワンバイ材」とは何の幅を表しているでしょうか？",
+                options: ["1cm", "1インチ", "10mm", "19mm"],
+                correct: 3,
+                explanation: "ワンバイ材（1×材）は厚さ19mmの木材を指します。1インチの名称ですが、実際は乾燥・加工により19mm程度になります。"
+            },
+            {
+                question: "ホームセンターでよく見かける「コンパネ」とは何の略称でしょうか？",
+                options: ["コンクリートパネル", "コンパクトパネル", "コンクリート型枠用合板", "コンテナパネル"],
+                correct: 2,
+                explanation: "コンパネは「コンクリート型枠用合板」の略称です。建築現場でコンクリートを流し込む際の型枠として使用される合板です。"
+            },
+            {
+                question: "ホームセンターで販売されている電動工具で、初心者が最初に購入すべきとされるのはどれでしょうか？",
+                options: ["電動ドリル", "丸ノコ", "ジグソー", "サンダー"],
+                correct: 0,
+                explanation: "電動ドリルは穴あけやネジ締めに使用でき、DIYの基本作業をカバーできるため、初心者が最初に購入すべき工具とされています。"
+            },
+            {
+                question: "ホームセンターで売られている「単管パイプ」の標準的な外径はどれでしょうか？",
+                options: ["42.7mm", "48.6mm", "50.0mm", "60.5mm"],
+                correct: 1,
+                explanation: "単管パイプの標準外径は48.6mmです。建築現場の足場や農業用のハウス骨組みなどに広く使用されています。"
+            },
+            {
+                question: "ホームセンターの接着剤コーナーでよく見かける「エポキシ系接着剤」の特徴はどれでしょうか？",
+                options: ["水に溶ける", "2液を混合して使用", "熱で溶ける", "すぐに固まる"],
+                correct: 1,
+                explanation: "エポキシ系接着剤は主剤と硬化剤の2液を混合することで化学反応を起こし、強力に接着します。金属やプラスチックの接着に適しています。"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedAnswer = null;
+        let userAnswers = [];
+
+        function startQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            selectedAnswer = null;
+            userAnswers = [];
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            
+            document.getElementById('questionNumber').textContent = `問題 ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('question').textContent = question.question;
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionElement);
+            });
+
+            // プログレスバーの更新
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+
+            document.getElementById('nextBtn').disabled = true;
+            selectedAnswer = null;
+        }
+
+        function selectOption(index) {
+            selectedAnswer = index;
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, i) => {
+                option.classList.remove('selected');
+                if (i === index) {
+                    option.classList.add('selected');
+                }
+            });
+
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            if (selectedAnswer === null) return;
+
+            const question = questions[currentQuestion];
+            userAnswers.push(selectedAnswer);
+
+            // 正解・不正解の表示
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedAnswer && selectedAnswer !== question.correct) {
+                    option.classList.add('incorrect');
+                }
+                option.onclick = null; // クリックを無効化
+            });
+
+            if (selectedAnswer === question.correct) {
+                score++;
+                createCelebration();
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < questions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }, 2000);
+        }
+
+        function createCelebration() {
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    const celebration = document.createElement('div');
+                    celebration.className = 'celebration';
+                    celebration.style.left = Math.random() * 100 + '%';
+                    celebration.style.background = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][Math.floor(Math.random() * 5)];
+                    document.body.appendChild(celebration);
+                    
+                    setTimeout(() => {
+                        celebration.remove();
+                    }, 2000);
+                }, i * 200);
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('finalScore').textContent = `${score} / ${questions.length} (${percentage}%)`;
+            
+            let message = '';
+            if (percentage >= 90) {
+                message = '🏆 ホームセンターマスター！素晴らしい知識です！';
+            } else if (percentage >= 70) {
+                message = '👍 とても良い成績です！DIY上級者ですね！';
+            } else if (percentage >= 50) {
+                message = '😊 なかなかの知識をお持ちですね！';
+            } else {
+                message = '📚 これからホームセンターで学びを深めましょう！';
+            }
+            
+            document.getElementById('scoreMessage').textContent = message;
+
+            // 解答レビューを表示
+            const reviewSection = document.getElementById('reviewSection');
+            reviewSection.innerHTML = '<h3 style="color: #2c3e50; margin: 30px 0 20px 0;">📋 解答レビュー</h3>';
+            
+            questions.forEach((question, index) => {
+                const isCorrect = userAnswers[index] === question.correct;
+                const reviewItem = document.createElement('div');
+                reviewItem.className = 'explanation';
+                reviewItem.innerHTML = `
+                    <h4>${isCorrect ? '✅' : '❌'} 問題 ${index + 1}</h4>
+                    <p><strong>あなたの答え:</strong> ${question.options[userAnswers[index]]}</p>
+                    <p><strong>正解:</strong> ${question.options[question.correct]}</p>
+                    <p><strong>解説:</strong> ${question.explanation}</p>
+                `;
+                reviewSection.appendChild(reviewItem);
+            });
+
+            // プログレスバーを100%に
+            document.getElementById('progressFill').style.width = '100%';
+        }
+
+        function restartQuiz() {
+            document.getElementById('quizContent').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+            startQuiz();
+        }
+
+        // クイズ開始
+        startQuiz();
+    </script>
+</body>
+</html>
